@@ -8,7 +8,7 @@
 sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3-dev ninja-build
 ```
 
-电机驱动中can0对应左腿，can1对应右腿加腰，can2对应左手，can3对应右手，默认按照usb转can插入上位机顺序编号，先插入的是can0。
+电机驱动中can0对应左腿，can1对应右腿加腰，can2对应左手，can3对应右手，默认按照usb转can插入上位机顺序编号，先插入的是can0。建议将USB转CAN插在上位机的3.0接口上，如果使用USB扩展坞也请使用3.0接口的USB扩展坞并插在3.0接口上，IMU和手柄插在USB2.0接口即可。
 
 编写udev规则用来将USB口与usb转can绑定，即可不需要再管设备插入上位机顺序，示例在99-auto-up-devs.rules中，需要修改的是KERNELS项，将其修改为该usb转can想要对应绑定的USB接口的KERNELS属性项。在上位机输入指令监视USB事件：
 
@@ -115,3 +115,13 @@ colcon build --symlink-install --cmake-args -G Ninja
 source install/setup.bash
 ros2 launch inference inference.launch.py
 ```
+
+## Joy
+
+连接上logitech手柄后，启动：
+
+```bash
+ros2 run joy joy_node
+```
+
+即可使用手柄，右摇杆控制前后左右，LT RT控制左转右转。
