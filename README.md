@@ -11,7 +11,7 @@
 
 This repository provides a deployment framework using ROS2 as middleware with a modular architecture for seamless customization and extension.
 
-**Maintainer**: Liu Zhihao
+**Maintainer**: Zhihao Liu
 **Contact**: <ZhihaoLiu_hit@163.com>
 
 **Key Features:**
