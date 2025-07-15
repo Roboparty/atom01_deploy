@@ -1,24 +1,48 @@
-# Deploy ROS2
+# ATOM01 ROS2 Deploy
 
-## 环境配置
+[![ROS2](https://img.shields.io/badge/ROS2-Humble-silver)](https://docs.ros.org/en/humble/index.html)
+![C++](https://img.shields.io/badge/C++-17-blue)
+[![Linux platform](https://img.shields.io/badge/platform-linux--x86_64-orange.svg)](https://releases.ubuntu.com/22.04/)
+[![Linux platform](https://img.shields.io/badge/platform-linux--aarch64-orange.svg)](https://releases.ubuntu.com/22.04/)
 
-部署依赖ccache fmt spdlog eigen3 ninja-build，在上位机中执行指令进行安装：
+[English](README.md) | [中文](README_CN.md)
+
+## Overview
+
+This repository provides a deployment framework using ROS2 as middleware with a modular architecture for seamless customization and extension.
+
+**Maintainer**: Liu Zhihao
+**Contact**: <ZhihaoLiu_hit@163.com>
+
+**Key Features:**
+
+- `Easy to Use` Provides complete detailed code for learning and code modification.
+- `Isolation` Different functions are implemented by different packages, supporting custom function packages.
+- `Long-term Support` This repository will be updated with the training repository code and will be supported long-term.
+
+## Environment Setup
+
+First install ROS2 humble, refer to [ROS official](https://docs.ros.org/en/humble/Installation.html) or [fishros](https://docs.ros.org/en/humble/Installation.html) for installation.
+
+The deployment also depends on libraries such as ccache fmt spdlog eigen3 ninja-build. Execute the following command on the host computer for installation:
 
 ```bash
 sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3-dev ninja-build
 ```
 
-电机驱动中can0对应左腿，can1对应右腿加腰，can2对应左手，can3对应右手，默认按照usb转can插入上位机顺序编号，先插入的是can0。建议将USB转CAN插在上位机的3.0接口上，如果使用USB扩展坞也请使用3.0接口的USB扩展坞并插在3.0接口上，IMU和手柄插在USB2.0接口即可。
+## Hardware Connection
 
-编写udev规则用来将USB口与usb转can绑定，即可不需要再管设备插入上位机顺序，示例在99-auto-up-devs.rules中，需要修改的是KERNELS项，将其修改为该usb转can想要对应绑定的USB接口的KERNELS属性项。在上位机输入指令监视USB事件：
+In the motor driver, can0 corresponds to the left leg, can1 corresponds to the right leg and waist, can2 corresponds to the left hand, and can3 corresponds to the right hand. By default, they are numbered according to the order of USB-to-CAN insertion into the host computer, with the first inserted being can0. It is recommended to plug the USB-to-CAN into the 3.0 interface of the host computer. If using a USB hub, please also use a 3.0 interface USB hub and plug it into the 3.0 interface. IMU and gamepad can be plugged into USB2.0 interfaces.
+
+Write udev rules to bind USB ports with USB-to-CAN devices, so you don't need to care about the order of device insertion into the host computer. An example is in 99-auto-up-devs.rules. What needs to be modified is the KERNELS item, changing it to the KERNELS attribute item of the USB interface that the USB-to-CAN device wants to bind to. Input the following command on the host computer to monitor USB events:
 
 ```bash
 sudo udevadm monitor
 ```
 
-在USB上插入设备时就会显示该USB接口的KERNELS属性项，如/devices/pci0000:00/0000:00:14.0/usb3/3-8/3-8:1.1，我们在匹配KERNELS属性项时使用3-8即可。如果想要绑定在该USB接口上的扩展坞上的USB口则会有3-8-x出现，此时使用3-8-x进行匹配扩展坞上的USB口。
+When inserting a device into the USB port, the KERNELS attribute item of that USB interface will be displayed, such as /devices/pci0000:00/0000:00:14.0/usb3/3-8/3-8:1.1. When matching the KERNELS attribute item, we can use 3-8. If you want to bind to a USB port on a hub connected to that USB interface, 3-8-x will appear, then use 3-8-x to match the USB port on the hub.
 
-编写完成后在上位机中执行：
+After writing, execute the following on the host computer:
 
 ```bash
 sudo cp 99-auto-up-devs.rules /etc/udev/rules.d/
@@ -26,102 +50,105 @@ sudo udevadm control --reload
 sudo udevadm trigger
 ```
 
-之后拔下所有can设备再插入指定USB接口即可生效。
+After that, unplug all CAN devices and plug them into the specified USB interfaces to take effect.
 
-该udev规则还包括IMU串口配置，也需要修改KERNELS项，方法不再赘述。如果规则正常生效，can应该全部自动配置完毕并使能，可以在上位机中输入ip a指令查看结果。
+The udev rules also include IMU serial port configuration, which also needs to modify the KERNELS item. The method is not repeated here. If the rules take effect normally, all CAN should be automatically configured and enabled. You can input the `ip a` command on the host computer to check the results.
 
-如果不配置udev规则，则需要按照上文顺序插入usb转can，并手动配置can和IMU串口：
+If you don't configure udev rules, you need to insert USB-to-CAN devices in the order mentioned above and manually configure CAN and IMU serial ports:
 
 ```bash
 sudo ip link set canX up type can bitrate 1000000
 sudo ip link set canX txqueuelen 1000
-# canX 为 can0 can1 can2 can3，需要为每个can都输入一遍上面两个指令
+# canX is can0 can1 can2 can3, you need to input the above two commands for each CAN
 
 sudo chmod 666 /dev/ttyUSB0
 ```
 
-## IMU
+## Software Usage
 
-编译：
+### IMU
+
+Compile:
 
 ```bash
 cd imu
 colcon build --symlink-install --cmake-args -G Ninja
 ```
 
-启动：
+Launch:
 
 ```bash
 source install/setup.bash
 ros2 launch hipnuc_imu imu_spec_msg.launch.py
 ```
 
-如果IMU串口权限正常，使用plotjunggler或者ros2 topic echo可以看到IMU数据。
+If IMU serial port permissions are normal, you can see IMU data using plotjunggler or ros2 topic echo.
 
-## MOTORS
+### MOTORS
 
-首先修改参数文件，保证参数正确！！！
+First modify the parameter file to ensure parameters are correct!!!
 
-编译：
+Compile:
 
 ```bash
 cd motors
 colcon build --symlink-install --cmake-args -G Ninja
 ```
 
-启动：
+Launch:
 
 ```bash
 source install/setup.bash
 ros2 launch motors motors_spec_msg.launch.py
 ```
 
-如果can配置正常，此时所有电机绿灯亮起。如果还未配置电机零点，将标定件插入把电机摆至零点后输入:
+If CAN configuration is normal, all motors' green lights should turn on at this time. If motor zero points haven't been configured yet, insert the calibration tool and position the motor to zero point, then input:
 
 ```bash
+# If already zeroed, please don't execute this command again unless the motor significantly loses zero point!!!
 ros2 service call /ser_zeros motors/srv/SetZeros
 ```
 
-观察到电机绿灯一个个灭下说明正在标零。
+Observe that the motor green lights turn off one by one, indicating zeroing is in progress.
 
-标零完成后重新启动motors并打开plotjunggler，订阅电机state话题后输入：
+After zeroing is complete, restart motors and open plotjunggler, subscribe to motor state topics and input:
 
 ```bash
 ros2 service call /read_motors motors/srv/ReadMotors
 ```
 
-此时在plotjunggler中可以看到各个电机此时位置，保证没有反向关节且都在零点附近后输入：
+At this time, you can see the current position of each motor in plotjunggler. Ensure there are no reversed joints and all are near zero point, then input:
 
 ```bash
 ros2 service call /reset_motors motors/srv/ResetMotors
 ```
 
-进行电机归零。
+To perform motor reset.
 
-## INFERENCE
+### INFERENCE
 
-首先修改参数文件，保证参数正确！！！将训练得到的onnx模型放到models文件夹中。
+First modify the parameter file to ensure parameters are correct!!! Put the trained ONNX model into the models folder.
 
-编译：
+Compile:
 
 ```bash
 cd inference
 colcon build --symlink-install --cmake-args -G Ninja
 ```
 
-保证IMU启动、电机启动且正常归零后，启动：
+After ensuring IMU is started, motors are started and properly reset, launch:
 
 ```bash
 source install/setup.bash
 ros2 launch inference inference.launch.py
 ```
 
-## Joy
+### Joy
 
-连接上logitech手柄后，启动：
+After connecting the Logitech gamepad, launch:
 
 ```bash
 ros2 run joy joy_node
 ```
 
-即可使用手柄，右摇杆控制前后左右，LT RT控制左转右转。
+Then you can use the gamepad. Right joystick controls forward/backward/left/right, LT RT controls left/right turn.
