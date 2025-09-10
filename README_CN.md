@@ -22,7 +22,7 @@
 
 ## 环境配置
 
-首先安装ROS2 humble，参考[ROS官方](https://docs.ros.org/en/humble/Installation.html)或者[fishros](https://docs.ros.org/en/humble/Installation.html)进行安装。
+首先安装ROS2 humble，参考[ROS官方](https://docs.ros.org/en/humble/Installation.html)进行安装。
 
 部署还依赖ccache fmt spdlog eigen3 ninja-build等库，在上位机中执行指令进行安装：
 
@@ -40,7 +40,7 @@ sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3
 sudo udevadm monitor
 ```
 
-在USB上插入设备时就会显示该USB接口的KERNELS属性项，如/devices/pci0000:00/0000:00:14.0/usb3/3-8/3-8:1.1，我们在匹配KERNELS属性项时使用3-8即可。如果想要绑定在该USB接口上的扩展坞上的USB口则会有3-8-x出现，此时使用3-8-x进行匹配扩展坞上的USB口。
+在USB上插入设备时就会显示该USB接口的KERNELS属性项，如/devices/pci0000:00/0000:00:14.0/usb3/3-8，我们在匹配KERNELS属性项时使用3-8即可。如果想要绑定在该USB接口上的扩展坞上的USB口则会有3-8.x出现，此时使用3-8.x进行匹配扩展坞上的USB口。
 
 编写完成后在上位机中执行：
 

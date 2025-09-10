@@ -22,7 +22,7 @@ This repository provides a deployment framework using ROS2 as middleware with a 
 
 ## Environment Setup
 
-First install ROS2 humble, refer to [ROS official](https://docs.ros.org/en/humble/Installation.html) or [fishros](https://docs.ros.org/en/humble/Installation.html) for installation.
+First install ROS2 humble, refer to [ROS official](https://docs.ros.org/en/humble/Installation.html) for installation.
 
 The deployment also depends on libraries such as ccache fmt spdlog eigen3 ninja-build. Execute the following command on the host computer for installation:
 
@@ -40,7 +40,7 @@ Write udev rules to bind USB ports with USB-to-CAN devices, so you don't need to
 sudo udevadm monitor
 ```
 
-When inserting a device into the USB port, the KERNELS attribute item of that USB interface will be displayed, such as /devices/pci0000:00/0000:00:14.0/usb3/3-8/3-8:1.1. When matching the KERNELS attribute item, we can use 3-8. If you want to bind to a USB port on a hub connected to that USB interface, 3-8-x will appear, then use 3-8-x to match the USB port on the hub.
+When inserting a device into the USB port, the KERNELS attribute item of that USB interface will be displayed, such as /devices/pci0000:00/0000:00:14.0/usb3/3-8. When matching the KERNELS attribute item, we can use 3-8. If you want to bind to a USB port on a hub connected to that USB interface, 3-8-x will appear, then use 3-8-x to match the USB port on the hub.
 
 After writing, execute the following on the host computer:
 
