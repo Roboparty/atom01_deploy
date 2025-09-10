@@ -21,20 +21,57 @@ print_error() {
     echo -e "${RED}$1${NC}"
 }
 
+# 函数：启动组件并检查
+start_component() {
+    local session_name=$1
+    local launch_cmd=$2
+    local node_name=$3
+    local sleep_time=$4
+
+    print_info "启动 $session_name..."
+    screen -dmS $session_name bash -c "$launch_cmd; exec bash"
+    sleep $sleep_time
+
+    if ! ros2 node list | grep -q "$node_name"; then
+        print_error "$session_name 启动失败！未检测到 $node_name 节点。"
+        cleanup_sessions
+        exit 1
+    fi
+    print_success "$session_name 启动成功 (screen会话: $session_name)"
+}
+
+# 函数：清理所有会话
+cleanup_sessions() {
+    screen -S imu_session -X quit 2>/dev/null
+    screen -S motor_session -X quit 2>/dev/null
+    screen -S inference_session -X quit 2>/dev/null
+    screen -S joy_session -X quit 2>/dev/null
+}
+
+# 切换到脚本目录
+cd "$(dirname "$0")"
+
+# 检查 colcon 和 ros2
+if ! command -v colcon &> /dev/null; then
+    print_error "colcon 未安装，请安装 ROS 2 开发工具"
+    exit 1
+fi
+if ! command -v ros2 &> /dev/null; then
+    print_error "ros2 未安装"
+    exit 1
+fi
+
 # 检查是否已安装screen
 if ! command -v screen &> /dev/null; then
-    print_info "未安装screen，正在安装..."
-    sudo apt update && sudo apt install -y screen || {
-        print_error "screen安装失败"
-        exit 1
-    }
+    print_error "screen 未安装"
+    exit 1
 fi
 
 # 检查是否已source setup文件
 if [ -z "$AMENT_PREFIX_PATH" ]; then
     print_info "未检测到ROS 2环境，正在执行source..."
-    source install/setup.bash || {
-        print_error "无法source install/setup.bash，请检查路径是否正确"
+    source /opt/ros/humble/setup.bash || {
+        print_error "无法source /opt/ros/humble/setup.bash，请检查路径是否正确"
         exit 1
     }
 fi
@@ -45,7 +82,7 @@ cd imu || {
     print_error "找不到imu目录"
     exit 1
 }
-colcon build --symlink-install || {
+colcon build --symlink-install --cmake-args -G Ninja|| {
     print_error "IMU包编译失败"
     exit 1
 }
@@ -58,7 +95,7 @@ cd motors || {
     print_error "找不到motors目录"
     exit 1
 }
-colcon build --symlink-install || {
+colcon build --symlink-install --cmake-args -G Ninja|| {
     print_error "电机包编译失败"
     exit 1
 }
@@ -71,7 +108,7 @@ cd inference || {
     print_error "找不到inference目录"
     exit 1
 }
-colcon build --symlink-install || {
+colcon build --symlink-install --cmake-args -G Ninja|| {
     print_error "推理包编译失败"
     exit 1
 }
@@ -80,76 +117,12 @@ cd ..
 
 # 停止可能正在运行的screen会话
 print_info "停止现有相关screen会话..."
-screen -S imu_session -X quit 2>/dev/null
-screen -S motor_session -X quit 2>/dev/null
-screen -S inference_session -X quit 2>/dev/null
-screen -S joy_session -X quit 2>/dev/null
+cleanup_sessions
 
-# 启动IMU (在screen后台运行)
-print_info "启动IMU..."
-screen -dmS imu_session bash -c "source install/setup.bash; ros2 launch hipnuc_imu imu_spec_msg.launch.py; exec bash"
-sleep 5
-
-# 检查IMU是否启动成功
-if ! screen -list | grep -q "imu_session"; then
-    print_error "IMU启动失败！"
-    exit 1
-fi
-print_success "IMU启动成功 (screen会话: imu_session)"
-
-# 启动电机
-print_info "启动电机..."
-screen -dmS motor_session bash -c "source install/setup.bash; ros2 launch motors motors_spec_msg.launch.py; exec bash"
-sleep 5
-
-# 检查电机是否启动成功
-if ! screen -list | grep -q "motor_session"; then
-    print_error "电机启动失败！"
-    screen -S imu_session -X quit
-    exit 1
-fi
-print_success "电机启动成功 (screen会话: motor_session)"
-
-# 电机归零
-print_info "正在进行电机归零..."
-ros2 service call /reset_motors motors/srv/ResetMotors "{}"
-if [ $? -ne 0 ]; then
-    print_error "电机归零失败！"
-    screen -S imu_session -X quit
-    screen -S motor_session -X quit
-    exit 1
-fi
-print_success "电机归零完成"
-sleep 2
-
-# # 启动推理模块
-# print_info "启动推理模块..."
-# screen -dmS inference_session bash -c "source install/setup.bash; ros2 launch inference inference.launch.py; exec bash"
-# sleep 5
-
-# # 检查推理模块是否启动成功
-# if ! screen -list | grep -q "inference_session"; then
-#     print_error "推理模块启动失败！"
-#     screen -S imu_session -X quit
-#     screen -S motor_session -X quit
-#     exit 1
-# fi
-# print_success "推理模块启动成功 (screen会话: inference_session)"
-
-# 启动手柄控制
-print_info "启动手柄控制..."
-screen -dmS joy_session bash -c "source install/setup.bash; ros2 run joy joy_node; exec bash"
-sleep 2
-
-# 检查手柄控制是否启动成功
-if ! screen -list | grep -q "joy_session"; then
-    print_error "手柄控制启动失败！"
-    screen -S imu_session -X quit
-    screen -S motor_session -X quit
-    # screen -S inference_session -X quit
-    exit 1
-fi
-print_success "手柄控制启动成功 (screen会话: joy_session)"
+start_component "imu_session" "ros2 launch hipnuc_imu imu_spec_msg.launch.py" "/IMU_publisher" 2
+start_component "motor_session" "ros2 launch motors motors_spec_msg.launch.py" "/MotorsNode" 2
+start_component "inference_session" "ros2 launch inference inference.launch.py" "/Inference" 2
+start_component "joy_session" "ros2 run joy joy_node" "/joy_node" 2
 
 # 所有组件启动完成
 print_success "----------------------------------------"
@@ -157,13 +130,17 @@ print_success "所有组件已在后台成功启动！"
 print_success "使用以下命令查看各组件输出："
 print_success "IMU: screen -r imu_session"
 print_success "电机: screen -r motor_session"
-# print_success "推理模块: screen -r inference_session"
+print_success "推理模块: screen -r inference_session"
 print_success "手柄控制: screen -r joy_session"
 print_success "----------------------------------------"
 print_info "若要退出某个screen会话，按Ctrl+A然后按D"
 print_info "使用以下命令停止所有组件："
 print_info "screen -S imu_session -X quit"
 print_info "screen -S motor_session -X quit"
-# print_info "screen -S inference_session -X quit"
+print_info "screen -S inference_session -X quit"
 print_info "screen -S joy_session -X quit"
-
+print_success "----------------------------------------"
+print_info "按下X使能/失能电机"
+print_info "按下A复位电机"
+print_info "按下B开始/停止推理"
+print_info "按下Y电机标零(谨慎使用，将重置电机零点)"
