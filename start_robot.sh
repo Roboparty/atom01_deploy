@@ -261,7 +261,7 @@ cleanup_sessions
 
 start_component "imu_session" "ros2 launch hipnuc_imu imu_spec_msg.launch.py" "imu_node" 2 70
 start_component "motor_session" "ros2 launch motors motors_spec_msg.launch.py" "motors_node" 2 80
-start_component "inference_session" "ros2 launch inference inference.launch.py" "inference_node" 2 80
+start_component "inference_session" "ros2 launch inference inference.launch.py" "inference_node" 2 75
 start_component "joy_session" "ros2 run joy joy_node" "joy_node" 2 65
 
 # 验证所有节点的实时优先级
