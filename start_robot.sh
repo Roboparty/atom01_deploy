@@ -27,9 +27,8 @@ start_component() {
     local launch_cmd=$2
     local node_name=$3
     local sleep_time=$4
-    local priority=$5
 
-    print_info "启动 $session_name (目标节点优先级: $priority)..."
+    print_info "启动 $session_name ..."
     # 在screen会话中启动ROS命令，并确保传递DDS配置环境变量
     screen -dmS $session_name bash -c "export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE='$FASTRTPS_DEFAULT_PROFILES_FILE'; $launch_cmd; exec bash"
     sleep $sleep_time
@@ -39,28 +38,6 @@ start_component() {
         cleanup_sessions
         exit 1
     fi
-    
-    # 启动成功后，查找并设置进程优先级
-    local attempt=0
-    local max_attempts=10
-    while [ $attempt -lt $max_attempts ]; do
-        # 查找节点对应的进程PID
-        local pid=$(pgrep -x "$node_name")
-        if [ -n "$pid" ]; then
-            # 设置实时优先级
-            if sudo chrt -r -p $priority $pid 2>/dev/null; then
-                print_success "$session_name 启动成功并设置优先级 (screen会话: $session_name, PID: $pid, 优先级: $priority)"
-                return 0
-            else
-                print_error "设置 $session_name 优先级失败，但节点已启动"
-                return 0
-            fi
-        fi
-        sleep 0.5
-        attempt=$((attempt + 1))
-    done
-    
-    print_error "无法找到 $session_name 对应的进程，但节点已启动"
 }
 
 # 函数：清理所有会话
@@ -149,33 +126,6 @@ verify_dds_effectiveness() {
     fi
 }
 
-# 函数：验证节点优先级
-verify_priorities() {
-    print_info "验证ROS节点实时优先级..."
-    sleep 2
-    
-    for node in "imu_node" "motors_node" "inference_node" "joy_node"; do
-        pid=$(pgrep -x "$node")
-
-        if [ -n "$pid" ]; then
-            # 获取实时优先级
-            priority=$(ps -o rtprio= -p $pid 2>/dev/null | tr -d ' ')
-            # 获取调度策略
-            policy=$(ps -o class= -p $pid 2>/dev/null | tr -d ' ')
-            
-            if [ -n "$priority" ] && [ "$priority" != "-" ]; then
-                print_success "$node (PID: $pid) 实时优先级: $priority, 调度策略: $policy"
-            else
-                # 检查是否是普通优先级
-                nice_val=$(ps -o ni= -p $pid 2>/dev/null | tr -d ' ')
-                print_error "$node (PID: $pid) 未设置实时优先级 (nice值: $nice_val, 调度策略: $policy)"
-            fi
-        else
-            print_error "未找到 $node 进程"
-        fi
-    done
-}
-
 # 切换到脚本目录
 cd "$(dirname "$0")"
 
@@ -222,7 +172,7 @@ cd imu || {
     print_error "找不到imu目录"
     exit 1
 }
-colcon build --symlink-install --cmake-args -G Ninja|| {
+colcon build --symlink-install|| {
     print_error "IMU包编译失败"
     exit 1
 }
@@ -235,7 +185,7 @@ cd motors || {
     print_error "找不到motors目录"
     exit 1
 }
-colcon build --symlink-install --cmake-args -G Ninja|| {
+colcon build --symlink-install|| {
     print_error "电机包编译失败"
     exit 1
 }
@@ -248,7 +198,7 @@ cd inference || {
     print_error "找不到inference目录"
     exit 1
 }
-colcon build --symlink-install --cmake-args -G Ninja|| {
+colcon build --symlink-install|| {
     print_error "推理包编译失败"
     exit 1
 }
@@ -259,13 +209,10 @@ cd ..
 print_info "停止现有相关screen会话..."
 cleanup_sessions
 
-start_component "imu_session" "ros2 launch hipnuc_imu imu_spec_msg.launch.py" "imu_node" 2 70
-start_component "motor_session" "ros2 launch motors motors_spec_msg.launch.py" "motors_node" 2 80
-start_component "inference_session" "ros2 launch inference inference.launch.py" "inference_node" 2 75
-start_component "joy_session" "ros2 run joy joy_node" "joy_node" 2 65
-
-# 验证所有节点的实时优先级
-verify_priorities
+start_component "imu_session" "ros2 launch hipnuc_imu imu_spec_msg.launch.py" "imu_node" 2
+start_component "motor_session" "ros2 launch motors motors_spec_msg.launch.py" "motors_node" 2
+start_component "inference_session" "ros2 launch inference inference.launch.py" "inference_node" 2
+start_component "joy_session" "ros2 run joy joy_node" "joy_node" 2
 
 # 验证节点的 DDS 配置
 verify_dds_effectiveness
@@ -288,5 +235,5 @@ print_info "screen -S joy_session -X quit"
 print_success "----------------------------------------"
 print_info "按下X使能/失能电机"
 print_info "按下A复位电机"
-print_info "按下B开始推理"
+print_info "按下B开始/暂停推理"
 print_info "按下Y读取电机数据"
