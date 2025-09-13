@@ -24,11 +24,27 @@
 
 首先安装ROS2 humble，参考[ROS官方](https://docs.ros.org/en/humble/Installation.html)进行安装。
 
-部署还依赖ccache fmt spdlog eigen3 ninja-build等库，在上位机中执行指令进行安装：
+部署还依赖ccache fmt spdlog eigen3等库，在上位机中执行指令进行安装：
 
 ```bash
-sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3-dev ninja-build
+sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3-dev
 ```
+
+接下来为用户授予实时优先级设置权限：
+
+```bash
+sudo nano /etc/security/limits.conf
+```
+
+在文件末尾添加以下两行，将 orangepi 替换为你的实际用户名：
+
+```bash
+# Allow user 'orangepi' to set real-time priorities
+orangepi   -   rtprio   98
+orangepi   -   memlock  unlimited
+```
+
+保存退出后重启香橙派使设置生效。
 
 ## 硬件链接
 

@@ -24,11 +24,27 @@ This repository provides a deployment framework using ROS2 as middleware with a 
 
 First install ROS2 humble, refer to [ROS official](https://docs.ros.org/en/humble/Installation.html) for installation.
 
-The deployment also depends on libraries such as ccache fmt spdlog eigen3 ninja-build. Execute the following command on the host computer for installation:
+The deployment also depends on libraries such as ccache fmt spdlog eigen3. Execute the following command on the host computer for installation:
 
 ```bash
-sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3-dev ninja-build
+sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3-dev
 ```
+
+Next, grant the user permission to set real-time priorities:
+
+```bash
+sudo nano /etc/security/limits.conf
+```
+
+Add the following two lines at the end of the file, replacing orangepi with your actual username:
+
+```bash
+# Allow user 'orangepi' to set real-time priorities
+orangepi   -   rtprio   98
+orangepi   -   memlock  unlimited
+```
+
+Save, exit, and then reboot the Orange Pi for the settings to take effect.
 
 ## Hardware Connection
 
