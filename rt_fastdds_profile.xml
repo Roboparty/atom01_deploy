@@ -38,9 +38,7 @@
                 <builtin>
                     <discovery_config>
                         <discoveryProtocol>SIMPLE</discoveryProtocol>
-                        <ignoreParticipantFlags>FILTER_DIFFERENT_HOST</ignoreParticipantFlags>
-                        </discovery_config>
-                    <avoid_builtin_multicast>true</avoid_builtin_multicast>
+                    </discovery_config>
                 </builtin>
             </rtps>
         </participant>
