@@ -122,7 +122,7 @@ If CAN configuration is normal, all motors' green lights should turn on at this 
 
 ```bash
 # If already zeroed, please don't execute this command again unless the motor significantly loses zero point!!!
-ros2 service call /ser_zeros motors/srv/SetZeros
+ros2 service call /set_zeros motors/srv/SetZeros
 ```
 
 Observe that the motor green lights turn off one by one, indicating zeroing is in progress.

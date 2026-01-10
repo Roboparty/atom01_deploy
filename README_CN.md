@@ -122,7 +122,7 @@ ros2 launch motors motors_spec_msg.launch.py
 
 ```bash
 # 如果标零过请不要再执行这一条，除非电机显著丢失零点！！！
-ros2 service call /ser_zeros motors/srv/SetZeros
+ros2 service call /set_zeros motors/srv/SetZeros
 ```
 
 观察到电机绿灯一个个灭下说明正在标零。
