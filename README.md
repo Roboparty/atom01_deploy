@@ -22,12 +22,22 @@ This repository provides a deployment framework using ROS2 as middleware with a 
 
 ## Environment Setup
 
+The deployment code runs on Orange Pi 5 Plus with Ubuntu 22.04 system and kernel version 5.10. We perform the environment configuration for deployment on Orange Pi 5 Plus.
+
 First install ROS2 humble, refer to [ROS official](https://docs.ros.org/en/humble/Installation.html) for installation.
 
 The deployment also depends on libraries such as ccache fmt spdlog eigen3. Execute the following command on the host computer for installation:
 
 ```bash
 sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3-dev
+```
+
+Then install the 5.10 real-time kernel for Orange Pi 5 Plus:
+
+```bash
+git clone https://github.com/Roboparty/atom01_deploy.git
+cd atom01_deploy
+sudo apt install *.deb
 ```
 
 Next, grant the user permission to set real-time priorities:

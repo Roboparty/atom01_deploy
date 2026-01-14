@@ -22,12 +22,22 @@
 
 ## 环境配置
 
+部署代码在香橙派5plus上运行，系统为ubuntu22.04，内核版本为5.10，我们在香橙派5plus上进行部署的环境配置。
+
 首先安装ROS2 humble，参考[ROS官方](https://docs.ros.org/en/humble/Installation.html)进行安装。
 
 部署还依赖ccache fmt spdlog eigen3等库，在上位机中执行指令进行安装：
 
 ```bash
 sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3-dev
+```
+
+然后安装香橙派5plus的5.10实时内核
+
+```bash
+git clone https://github.com/Roboparty/atom01_deploy.git
+cd atom01_deploy
+sudo apt install *.deb
 ```
 
 接下来为用户授予实时优先级设置权限：
