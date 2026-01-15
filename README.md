@@ -37,7 +37,7 @@ Then install the 5.10 real-time kernel for Orange Pi 5 Plus:
 ```bash
 git clone https://github.com/Roboparty/atom01_deploy.git
 cd atom01_deploy
-sudo apt install *.deb
+sudo apt install ./*.deb
 ```
 
 Next, grant the user permission to set real-time priorities:

@@ -37,7 +37,7 @@ sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3
 ```bash
 git clone https://github.com/Roboparty/atom01_deploy.git
 cd atom01_deploy
-sudo apt install *.deb
+sudo apt install ./*.deb
 ```
 
 接下来为用户授予实时优先级设置权限：
