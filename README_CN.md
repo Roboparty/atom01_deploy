@@ -36,8 +36,9 @@ sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3
 
 ```bash
 git clone https://github.com/Roboparty/atom01_deploy.git
-cd atom01_deploy
+cd atom01_deploy/assets
 sudo apt install ./*.deb
+cd ..
 ```
 
 接下来为用户授予实时优先级设置权限：
@@ -86,95 +87,155 @@ sudo udevadm trigger
 sudo ip link set canX up type can bitrate 1000000
 sudo ip link set canX txqueuelen 1000
 # canX 为 can0 can1 can2 can3，需要为每个can都输入一遍上面两个指令
-
 sudo chmod 666 /dev/ttyUSB0
 ```
 
 ## 软件使用
 
-### IMU
-
-编译：
+### 启动机器人
 
 ```bash
-cd imu
-colcon build --symlink-install --cmake-args -G Ninja
+./tools/start_robot.sh
 ```
 
-启动：
+### 手柄控制
 
-```bash
-source install/setup.bash
-ros2 launch hipnuc_imu imu_spec_msg.launch.py
+- **A 键**: 初始化/去初始化电机
+- **X 键**: 重置电机
+- **B 键**: 开始/暂停推理
+- **Y 键**: 切换 手柄控制 / cmd_vel指令控制
+
+### 服务接口
+
+可以通过命令行调用ROS2服务来控制机器人：
+
+- **初始化电机**:
+  ```bash
+  ros2 service call /init_motors std_srvs/srv/Trigger
+  ```
+
+- **去初始化电机**:
+  ```bash
+  ros2 service call /deinit_motors std_srvs/srv/Trigger
+  ```
+
+- **开始推理**:
+  ```bash
+  ros2 service call /start_inference std_srvs/srv/Trigger
+  ```
+
+- **停止推理**:
+  ```bash
+  ros2 service call /stop_inference std_srvs/srv/Trigger
+  ```
+
+- **清除错误**:
+  ```bash
+  ros2 service call /clear_errors std_srvs/srv/Trigger
+  ```
+
+- **设置零点**:
+  ```bash
+  ros2 service call /set_zeros std_srvs/srv/Trigger
+  ```
+
+- **重置关节**:
+  ```bash
+  ros2 service call /reset_joints std_srvs/srv/Trigger
+  ```
+
+- **刷新关节状态**:
+  ```bash
+  ros2 service call /refresh_joints std_srvs/srv/Trigger
+  ```
+
+## Python SDK
+
+本仓库提供了 Python SDK，方便用户使用 Python 脚本控制硬件。在使用前请确保已经 source 了 ROS2 环境和本工作空间的 install/setup.bash。
+
+### 1. IMU SDK (`imu_py`)
+
+#### 静态方法
+- `create_imu(imu_id: int, interface_type: str, interface: str, imu_type: str, baudrate: int = 0) -> IMUDriver`: 创建 IMU 驱动实例。
+
+#### 成员方法
+- `get_imu_id() -> int`: 获取 IMU ID。
+- `get_ang_vel() -> List[float]`: 获取角速度 [x, y, z]。
+- `get_quat() -> List[float]`: 获取四元数 [w, x, y, z]。
+- `get_lin_acc() -> List[float]`: 获取线加速度 [x, y, z]。
+- `get_temperature() -> float`: 获取温度。
+
+#### 使用示例
+```python
+import imu_py
+imu = imu_py.IMUDriver.create_imu(8, "serial", "/dev/ttyUSB0", "HIPNUC", 921600)
+quat = imu.get_quat()
 ```
 
-如果IMU串口权限正常，使用plotjunggler或者ros2 topic echo可以看到IMU数据。
+### 2. 电机 SDK (`motors_py`)
 
-### MOTORS
+提供了 `MotorControlMode` 枚举：`NONE`, `MIT`, `POS`, `SPD`。
 
-首先修改参数文件，保证参数正确！！！
+#### 静态方法
+- `create_motor(motor_id: int, interface_type: str, interface: str, motor_type: str, motor_model: int, master_id_offset: int = 0) -> MotorDriver`: 创建电机驱动实例。
 
-编译：
+#### 成员方法
+- `init_motor()`: 初始化电机。
+- `deinit_motor()`: 去初始化电机。
+- `set_motor_control_mode(mode: MotorControlMode)`: 设置控制模式。
+- `motor_mit_cmd(pos: float, vel: float, kp: float, kd: float, torque: float)`: MIT 模式控制指令。
+- `motor_pos_cmd(pos: float, spd: float, ignore_limit: bool = False)`: 位置模式控制指令。
+- `motor_spd_cmd(spd: float)`: 速度模式控制指令。
+- `lock_motor() / unlock_motor()`: 锁定/解锁电机。
+- `set_motor_zero()`: 设置当前位置为零点。
+- `clear_motor_error()`: 清除错误。
+- `get_motor_pos() -> float`: 获取位置 (rad)。
+- `get_motor_spd() -> float`: 获取速度 (rad/s)。
+- `get_motor_current() -> float`: 获取电流 (A)。
+- `get_motor_temperature() -> float`: 获取温度 (°C)。
+- `get_error_id() -> int`: 获取错误码。
+- `write_motor_flash()`: 将当前参数写入 Flash。
+- `reset_motor_id(new_id: int)`: 重置电机 ID。
 
-```bash
-cd motors
-colcon build --symlink-install --cmake-args -G Ninja
+#### 使用示例
+```python
+import motors_py
+motor = motors_py.MotorDriver.create_motor(1, "can", "can0", "DM", 0, 16)
+motor.init_motor()
+motor.set_motor_control_mode(motors_py.MotorControlMode.MIT)
+motor.motor_mit_cmd(0.0, 0.0, 5.0, 1.0, 0.0)
 ```
 
-启动：
+### 3. 机器人 SDK (`robot_py`)
 
-```bash
-source install/setup.bash
-ros2 launch motors motors_spec_msg.launch.py
+`RobotInterface` 类用于统一控制整个机器人，读取配置文件自动加载电机和 IMU。
+
+#### 构造函数
+- `RobotInterface(config_file: str)`: 根据配置文件路径创建实例。
+
+#### 成员方法
+- `init_motors()`: 初始化所有电机。
+- `deinit_motors()`: 去初始化所有电机。
+- `reset_joints(joint_default_angle: List[float])`: 将所有关节重置到默认角度。
+- `apply_action(action: List[float])`: 应用控制动作 (关节目标位置/力矩等，取决于内部实现)。
+- `refresh_joints()`: 刷新所有关节状态。
+- `set_zeros()`: 将当前所有关节位置设为零点。
+- `clear_errors()`: 清除所有电机错误。
+- `get_joint_q() -> List[float]`: 获取所有关节位置。
+- `get_joint_vel() -> List[float]`: 获取所有关节速度。
+- `get_joint_tau() -> List[float]`: 获取所有关节力矩。
+- `get_quat() -> List[float]`: 获取 IMU 四元数 [w, x, y, z]。
+- `get_ang_vel() -> List[float]`: 获取 IMU 角速度。
+
+#### 属性
+- `is_init`: (只读) 机器人是否已初始化。
+
+#### 使用示例
+```python
+import robot_py
+robot = robot_py.RobotInterface("config/robot.yaml")
+robot.init_motors()
+robot.apply_action([0.0] * 23)
 ```
 
-如果can配置正常，此时所有电机绿灯亮起。如果还未配置电机零点，将标定件插入把电机摆至零点后输入:
-
-```bash
-# 如果标零过请不要再执行这一条，除非电机显著丢失零点！！！
-ros2 service call /set_zeros motors/srv/SetZeros
-```
-
-观察到电机绿灯一个个灭下说明正在标零。
-
-标零完成后重新启动motors并打开plotjunggler，订阅电机state话题后输入：
-
-```bash
-ros2 service call /read_motors motors/srv/ReadMotors
-```
-
-此时在plotjunggler中可以看到各个电机此时位置，保证没有反向关节且都在零点附近后输入：
-
-```bash
-ros2 service call /reset_motors motors/srv/ResetMotors
-```
-
-进行电机归零。
-
-### INFERENCE
-
-首先修改参数文件，保证参数正确！！！将训练得到的onnx模型放到models文件夹中。
-
-编译：
-
-```bash
-cd inference
-colcon build --symlink-install --cmake-args -G Ninja
-```
-
-保证IMU启动、电机启动且正常归零后，启动：
-
-```bash
-source install/setup.bash
-ros2 launch inference inference.launch.py
-```
-
-### Joy
-
-连接上logitech手柄后，启动：
-
-```bash
-ros2 run joy joy_node
-```
-
-即可使用手柄，右摇杆控制前后左右，LT RT控制左转右转。
+**提示**: 详细 Python 脚本示例请参考 `scripts/` 目录。
