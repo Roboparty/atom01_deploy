@@ -42,8 +42,6 @@ start_component() {
 
 # 函数：清理所有会话
 cleanup_sessions() {
-    screen -S imu_session -X quit 2>/dev/null
-    screen -S motor_session -X quit 2>/dev/null
     screen -S inference_session -X quit 2>/dev/null
     screen -S joy_session -X quit 2>/dev/null
 }
@@ -80,7 +78,7 @@ verify_dds_effectiveness() {
     
     # 3. 检查进程是否使用了 Fast DDS
     print_info "检查进程 DDS 实现..."
-    for node in "imu_node" "motors_node" "inference_node" "joy_node"; do
+    for node in "inference_node" "joy_node"; do
         local pid=$(pgrep -x "$node" 2>/dev/null)
         if [ -n "$pid" ]; then
             # 检查进程环境变量
@@ -128,11 +126,12 @@ verify_dds_effectiveness() {
 
 # 切换到脚本目录
 cd "$(dirname "$0")"
+cd ..
 
 # 设置 DDS 配置文件
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 export RMW_FASTRTPS_USE_QOS_FROM_XML=1
-export FASTRTPS_DEFAULT_PROFILES_FILE="$(pwd)/rt_fastdds_profile.xml"
+export FASTRTPS_DEFAULT_PROFILES_FILE="$(pwd)/assets/rt_fastdds_profile.xml"
 print_info "设置 DDS 配置文件: $FASTRTPS_DEFAULT_PROFILES_FILE"
 
 # 检查 DDS 配置文件是否存在
@@ -166,51 +165,18 @@ if [ -z "$AMENT_PREFIX_PATH" ]; then
     }
 fi
 
-# 编译IMU包
-print_info "编译IMU包..."
-cd imu || {
-    print_error "找不到imu目录"
-    exit 1
-}
-colcon build --symlink-install|| {
-    print_error "IMU包编译失败"
-    exit 1
-}
-source install/setup.bash
-cd ..
-
-# 编译电机包
-print_info "编译电机包..."
-cd motors || {
-    print_error "找不到motors目录"
-    exit 1
-}
-colcon build --symlink-install|| {
-    print_error "电机包编译失败"
-    exit 1
-}
-source install/setup.bash
-cd ..
-
 # 编译推理包
 print_info "编译推理包..."
-cd inference || {
-    print_error "找不到inference目录"
-    exit 1
-}
 colcon build --symlink-install|| {
     print_error "推理包编译失败"
     exit 1
 }
 source install/setup.bash
-cd ..
 
 # 停止可能正在运行的screen会话
 print_info "停止现有相关screen会话..."
 cleanup_sessions
 
-start_component "imu_session" "ros2 launch hipnuc_imu imu_spec_msg.launch.py" "imu_node" 2
-start_component "motor_session" "ros2 launch motors motors_spec_msg.launch.py" "motors_node" 2
 start_component "inference_session" "ros2 launch inference inference.launch.py" "inference_node" 2
 start_component "joy_session" "ros2 run joy joy_node" "joy_node" 2
 
@@ -221,15 +187,11 @@ verify_dds_effectiveness
 print_success "----------------------------------------"
 print_success "所有组件已在后台成功启动！"
 print_success "使用以下命令查看各组件输出："
-print_success "IMU: screen -r imu_session"
-print_success "电机: screen -r motor_session"
 print_success "推理模块: screen -r inference_session"
 print_success "手柄控制: screen -r joy_session"
 print_success "----------------------------------------"
 print_info "若要退出某个screen会话，按Ctrl+A然后按D"
 print_info "使用以下命令停止所有组件："
-print_info "screen -S imu_session -X quit"
-print_info "screen -S motor_session -X quit"
 print_info "screen -S inference_session -X quit"
 print_info "screen -S joy_session -X quit"
 print_success "----------------------------------------"
