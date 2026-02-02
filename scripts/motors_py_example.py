@@ -28,14 +28,23 @@ def example_can_motor():
         
         print("\n=== MIT模式控制示例 ===")
         motors[0].set_motor_control_mode(motors_py.MotorControlMode.MIT)
-        
+
+        # 记录初始位置
+        initial_pos = motors[0].get_motor_pos()
+
         target_pos = -0.5
         target_vel = 0.0
         kp = 5.0
         kd = 1.0
         torque = 0.0
-        
+
+        # 先到目标位置
         motors[0].motor_mit_cmd(target_pos, target_vel, kp, kd, torque)
+        time.sleep(1)
+
+        # 再回到初始位置
+        motors[0].motor_mit_cmd(initial_pos, target_vel, kp, kd, torque)
+        time.sleep(1)
             
         # 读取电机状态
         pos = motors[0].get_motor_pos()
