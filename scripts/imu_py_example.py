@@ -21,16 +21,22 @@ def example_serial_imu():
     
     for i in range(1000):
         quat = imu.get_quat()
-        print(f"四元数: w={quat[0]:.4f}, x={quat[1]:.4f}, y={quat[2]:.4f}, z={quat[3]:.4f}")
+        print(
+            f"四元数(无量纲): w={quat[0]:.4f}, x={quat[1]:.4f}, y={quat[2]:.4f}, z={quat[3]:.4f}"
+        )
         
         ang_vel = imu.get_ang_vel()
-        print(f"角速度: x={ang_vel[0]:.4f}, y={ang_vel[1]:.4f}, z={ang_vel[2]:.4f} rad/s")
+        print(
+            f"角速度: x={ang_vel[0]:.4f} rad/s, y={ang_vel[1]:.4f} rad/s, z={ang_vel[2]:.4f} rad/s"
+        )
         
         lin_acc = imu.get_lin_acc()
-        print(f"线加速度: x={lin_acc[0]:.4f}, y={lin_acc[1]:.4f}, z={lin_acc[2]:.4f} m/s^2")
+        print(
+            f"线加速度: x={lin_acc[0]:.4f} m/s^2, y={lin_acc[1]:.4f} m/s^2, z={lin_acc[2]:.4f} m/s^2"
+        )
         
         temp = imu.get_temperature()
-        print(f"温度: {temp:.2f}°C")
+        print(f"温度: {temp:.2f} °C")
         
         print("-" * 50)
         time.sleep(0.01)
