@@ -38,13 +38,17 @@ def example_can_motor():
         kd = 1.0
         torque = 0.0
 
-        # 先到目标位置
-        motors[0].motor_mit_cmd(target_pos, target_vel, kp, kd, torque)
-        time.sleep(1)
+        # 先到目标位置（MIT 模式需要周期性发送指令保持输出）
+        start_time = time.time()
+        while time.time() - start_time < 1.0:
+            motors[0].motor_mit_cmd(target_pos, target_vel, kp, kd, torque)
+            time.sleep(0.01)
 
         # 再回到初始位置
-        motors[0].motor_mit_cmd(initial_pos, target_vel, kp, kd, torque)
-        time.sleep(1)
+        start_time = time.time()
+        while time.time() - start_time < 1.0:
+            motors[0].motor_mit_cmd(initial_pos, target_vel, kp, kd, torque)
+            time.sleep(0.01)
             
         # 读取电机状态
         pos = motors[0].get_motor_pos()
