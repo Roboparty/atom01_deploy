@@ -29,10 +29,11 @@ def example_can_motor():
         print("\n=== MIT模式控制示例 ===")
         motors[0].set_motor_control_mode(motors_py.MotorControlMode.MIT)
 
-        # 记录初始位置
+        # 记录初始位置（使用相对位移，避免动作逐次变小）
         initial_pos = motors[0].get_motor_pos()
 
-        target_pos = -0.5
+        delta_pos = -1.5
+        target_pos = initial_pos + delta_pos
         target_vel = 0.0
         kp = 5.0
         kd = 1.0
