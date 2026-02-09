@@ -177,7 +177,7 @@ quat = imu.get_quat()
 提供了 `MotorControlMode` 枚举：`NONE`, `MIT`, `POS`, `SPD`。
 
 #### 静态方法
-- `create_motor(motor_id: int, interface_type: str, interface: str, motor_type: str, motor_model: int, master_id_offset: int = 0) -> MotorDriver`: 创建电机驱动实例。
+- `create_motor(motor_id: int, interface_type: str, interface: str, motor_type: str, motor_model: int, master_id_offset: int = 0, motor_zero_offset: double = 0.0) -> MotorDriver`: 创建电机驱动实例。
 
 #### 成员方法
 - `init_motor()`: 初始化电机。

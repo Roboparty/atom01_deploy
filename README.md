@@ -176,7 +176,7 @@ quat = imu.get_quat()
 Provides `MotorControlMode` enum: `NONE`, `MIT`, `POS`, `SPD`.
 
 #### Static Methods
-- `create_motor(motor_id: int, interface_type: str, interface: str, motor_type: str, motor_model: int, master_id_offset: int = 0) -> MotorDriver`: Create a motor driver instance.
+- `create_motor(motor_id: int, interface_type: str, interface: str, motor_type: str, motor_model: int, master_id_offset: int = 0, motor_zero_offset: double = 0.0) -> MotorDriver`: Create a motor driver instance.
 
 #### Member Methods
 - `init_motor()`: Initialize motor.
