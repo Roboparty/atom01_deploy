@@ -36,7 +36,9 @@ sudo apt update && sudo apt install -y ccache libfmt-dev libspdlog-dev libeigen3
 
 ```bash
 git clone https://github.com/Roboparty/atom01_deploy.git
-cd atom01_deploy/assets
+cd atom01_deploy
+git submodule update --init --recursive
+cd assets
 sudo apt install ./*.deb
 cd ..
 ```
@@ -104,6 +106,7 @@ sudo chmod 666 /dev/ttyUSB0
 - **X 键**: 重置电机
 - **B 键**: 开始/暂停推理
 - **Y 键**: 切换 手柄控制 / cmd_vel指令控制
+- **LB 键** 切换策略模式（在 beyondmimic / interrupt 模式下可用），按下后会暂停推理，需要手动按B键开始推理
 
 ### 服务接口
 
