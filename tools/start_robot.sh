@@ -30,7 +30,7 @@ start_component() {
 
     print_info "启动 $session_name ..."
     # 在screen会话中启动ROS命令，并确保传递DDS配置环境变量
-    screen -dmS $session_name bash -c "export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE='$FASTRTPS_DEFAULT_PROFILES_FILE'; $launch_cmd; exec bash"
+    screen -dmS $session_name bash -c "source install/setup.bash; export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE='$FASTRTPS_DEFAULT_PROFILES_FILE'; $launch_cmd; exec bash"
     sleep $sleep_time
 
     if ! ros2 node list | grep -q "$node_name"; then
@@ -140,6 +140,15 @@ if [ ! -f "$FASTRTPS_DEFAULT_PROFILES_FILE" ]; then
     exit 1
 fi
 
+# 检查是否已source setup文件
+if [ -z "$AMENT_PREFIX_PATH" ]; then
+    print_info "未检测到ROS 2环境，正在执行source..."
+    source /opt/ros/humble/setup.bash || {
+        print_error "无法source /opt/ros/humble/setup.bash，请检查路径是否正确"
+        exit 1
+    }
+fi
+
 # 检查 colcon 和 ros2
 if ! command -v colcon &> /dev/null; then
     print_error "colcon 未安装，请安装 ROS 2 开发工具"
@@ -156,18 +165,9 @@ if ! command -v screen &> /dev/null; then
     exit 1
 fi
 
-# 检查是否已source setup文件
-if [ -z "$AMENT_PREFIX_PATH" ]; then
-    print_info "未检测到ROS 2环境，正在执行source..."
-    source /opt/ros/humble/setup.bash || {
-        print_error "无法source /opt/ros/humble/setup.bash，请检查路径是否正确"
-        exit 1
-    }
-fi
-
 # 编译推理包
 print_info "编译推理包..."
-colcon build --symlink-install|| {
+colcon build --symlink-install || {
     print_error "推理包编译失败"
     exit 1
 }
@@ -177,7 +177,7 @@ source install/setup.bash
 print_info "停止现有相关screen会话..."
 cleanup_sessions
 
-start_component "inference_session" "ros2 launch inference inference.launch.py" "inference_node" 2
+start_component "inference_session" "ros2 launch inference inference.launch.py" "inference_node" 5
 start_component "joy_session" "ros2 run joy joy_node" "joy_node" 2
 
 # 验证节点的 DDS 配置

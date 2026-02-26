@@ -36,7 +36,9 @@ Then install the 5.10 real-time kernel for Orange Pi 5 Plus:
 
 ```bash
 git clone https://github.com/Roboparty/atom01_deploy.git
-cd atom01_deploy/assets
+cd atom01_deploy
+git submodule update --init --recursive
+cd assets
 sudo apt install ./*.deb
 cd ..
 ```
@@ -67,7 +69,7 @@ Write udev rules to bind USB ports with USB-to-CAN devices, so you don't need to
 sudo udevadm monitor
 ```
 
-When inserting a device into the USB port, the KERNELS attribute item of that USB interface will be displayed, such as /devices/pci0000:00/0000:00:14.0/usb3/3-8. When matching the KERNELS attribute item, we can use 3-8. If you want to bind to a USB port on a hub connected to that USB interface, 3-8-x will appear, then use 3-8-x to match the USB port on the hub.
+When inserting a device into the USB port, the KERNELS attribute item of that USB interface will be displayed, such as /devices/pci0000:00/0000:00:14.0/usb3/3-8. When matching the KERNELS attribute item, we can use 3-8. If you want to bind to a USB port on a hub connected to that USB interface, 3-8.x will appear, then use 3-8.x to match the USB port on the hub.
 
 After writing, execute the following on the host computer:
 
@@ -103,6 +105,7 @@ sudo chmod 666 /dev/ttyUSB0
 - **X Button**: Reset motors
 - **B Button**: Start/Pause inference
 - **Y Button**: Switch between Gamepad Control / cmd_vel Control
+- **LB Button**: Switch policy mode (available in beyondmimic / interrupt modes). Pressing it will pause inference, and you need to manually press the B button to start inference.
 
 ### Service Interface
 
@@ -176,7 +179,7 @@ quat = imu.get_quat()
 Provides `MotorControlMode` enum: `NONE`, `MIT`, `POS`, `SPD`.
 
 #### Static Methods
-- `create_motor(motor_id: int, interface_type: str, interface: str, motor_type: str, motor_model: int, master_id_offset: int = 0) -> MotorDriver`: Create a motor driver instance.
+- `create_motor(motor_id: int, interface_type: str, interface: str, motor_type: str, motor_model: int, master_id_offset: int = 0, motor_zero_offset: double = 0.0) -> MotorDriver`: Create a motor driver instance.
 
 #### Member Methods
 - `init_motor()`: Initialize motor.
