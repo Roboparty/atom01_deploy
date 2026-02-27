@@ -24,6 +24,8 @@ This repository provides a deployment framework using ROS2 as middleware with a 
 
 The deployment code runs on Orange Pi 5 Plus with Ubuntu 22.04 system and kernel version 5.10. We perform the environment configuration for deployment on Orange Pi 5 Plus.
 
+It also supports deployment on RDK X5, with the system being Ubuntu 22.04 and the kernel version being 6.1.83. For subsequent operations, you can refer to the deployment process of Orange Pi 5 Plus. Any differences will be noted separately. 
+
 First install ROS2 humble, refer to [ROS official](https://docs.ros.org/en/humble/Installation.html) for installation.
 
 The deployment also depends on libraries such as ccache fmt spdlog eigen3. Execute the following command on the host computer for installation:
@@ -43,6 +45,8 @@ sudo apt install ./*.deb
 cd ..
 ```
 
+> **Note**: For RDK X5, there is no need to perform this step. Please directly flash the image we provide that has the real-time kernel pre-installed. 
+
 Next, grant the user permission to set real-time priorities:
 
 ```bash
@@ -56,8 +60,21 @@ Add the following two lines at the end of the file, replacing orangepi with your
 orangepi   -   rtprio   98
 orangepi   -   memlock  unlimited
 ```
+> **Note**: The default username for RDK X5 users is `sunrise`. The corresponding statement is as follows. 
 
-Save, exit, and then reboot the Orange Pi for the settings to take effect.
+```bash
+# Allow user 'sunrise' to set real-time priorities
+sunrise   -   rtprio   98
+sunrise   -   memlock  unlimited
+```
+
+Restart the device to make the configuration take effect, and then verify it through the following commands: 
+
+```bash
+ulimit -r
+```
+
+An output of **98** indicates a successful configuration. 
 
 ## Hardware Connection
 
@@ -75,6 +92,13 @@ After writing, execute the following on the host computer:
 
 ```bash
 sudo cp 99-auto-up-devs.rules /etc/udev/rules.d/
+sudo udevadm control --reload
+sudo udevadm trigger
+```
+
+The files of RDK X5 are slightly different. 
+```bash
+sudo cp 99-auto-up-devs-sunrise.rules /etc/udev/rules.d/
 sudo udevadm control --reload
 sudo udevadm trigger
 ```

@@ -24,6 +24,8 @@
 
 部署代码在香橙派5plus上运行，系统为ubuntu22.04，内核版本为5.10，我们在香橙派5plus上进行部署的环境配置。
 
+同时支持部署在 ​RDK X5​，系统为ubuntu 22.04，内核版本为6.1.83，后续操作可参照香橙派 5 Plus 部署流程，差异处会另行注明。
+
 首先安装ROS2 humble，参考[ROS官方](https://docs.ros.org/en/humble/Installation.html)进行安装。
 
 部署还依赖ccache fmt spdlog eigen3等库，在上位机中执行指令进行安装：
@@ -43,6 +45,8 @@ sudo apt install ./*.deb
 cd ..
 ```
 
+> ​**注意**​：RDK X5 无需执行此步骤，请直接烧录我们提供的、已预装实时内核的镜像。
+
 接下来为用户授予实时优先级设置权限：
 
 ```bash
@@ -57,7 +61,21 @@ orangepi   -   rtprio   98
 orangepi   -   memlock  unlimited
 ```
 
-保存退出后重启香橙派使设置生效。
+> ​**注**​：RDK X5 的默认用户名为 `sunrise`，对应语句如下。
+
+```bash
+# Allow user 'sunrise' to set real-time priorities
+sunrise   -   rtprio   98
+sunrise   -   memlock  unlimited
+```
+
+重启设备使配置生效，随后通过以下指令验证：
+
+```bash
+ulimit -r
+```
+
+输出为 **98** 即代表配置成功。
 
 ## 硬件链接
 
@@ -75,6 +93,14 @@ sudo udevadm monitor
 
 ```bash
 sudo cp 99-auto-up-devs.rules /etc/udev/rules.d/
+sudo udevadm control --reload
+sudo udevadm trigger
+```
+
+RDK X5的文件略有不同
+
+```bash
+sudo cp 99-auto-up-devs-sunrise.rules /etc/udev/rules.d/
 sudo udevadm control --reload
 sudo udevadm trigger
 ```
