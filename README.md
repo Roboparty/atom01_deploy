@@ -76,6 +76,13 @@ ulimit -r
 
 An output of **98** indicates a successful configuration. 
 
+> **Note**: If you are using an RDK X5 device, edit the default `create_ap.conf` while configuring `create_ap` (lines 24-25):
+
+```ini
+INTERNET_IFACE=usb0
+WIFI_IFACE=wlan0
+```
+
 ## Hardware Connection
 
 In the motor driver, can0 corresponds to the left leg, can1 corresponds to the right leg and waist, can2 corresponds to the left hand, and can3 corresponds to the right hand. By default, they are numbered according to the order of USB-to-CAN insertion into the host computer, with the first inserted being can0. It is recommended to plug the USB-to-CAN into the 3.0 interface of the host computer. If using a USB hub, please also use a 3.0 interface USB hub and plug it into the 3.0 interface. IMU and gamepad can be plugged into USB2.0 interfaces.

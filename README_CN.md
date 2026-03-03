@@ -77,6 +77,13 @@ ulimit -r
 
 输出为 **98** 即代表配置成功。
 
+> ​**注意**​：如果你使用 RDK X5 设备，配置 create_ap 时需要修改默认的 create_ap.conf 文件，位置在第 24-25 行：
+
+```ini
+INTERNET_IFACE=usb0
+WIFI_IFACE=wlan0
+```
+
 ## 硬件链接
 
 电机驱动中can0对应左腿，can1对应右腿加腰，can2对应左手，can3对应右手，默认按照usb转can插入上位机顺序编号，先插入的是can0。建议将USB转CAN插在上位机的3.0接口上，如果使用USB扩展坞也请使用3.0接口的USB扩展坞并插在3.0接口上，IMU和手柄插在USB2.0接口即可。
