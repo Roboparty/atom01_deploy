@@ -1,3 +1,5 @@
+SUBSYSTEM=="net", ACTION=="add", KERNELS=="spi5.0", KERNEL=="can*", NAME="can4"
+
 SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="606f", KERNELS=="1-1.2.1", KERNEL=="can*", NAME="can0", RUN+="/sbin/ip link set can0 up type can bitrate 1000000", RUN+="/sbin/ip link set can0 txqueuelen 1000"
 
 SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="606f", KERNELS=="1-1.2.2", KERNEL=="can*", NAME="can1", RUN+="/sbin/ip link set can1 up type can bitrate 1000000", RUN+="/sbin/ip link set can1 txqueuelen 1000"

@@ -6,5 +6,5 @@ SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="606
 
 SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="606f", KERNELS=="5-1.4.4", KERNEL=="can*", NAME="can3", RUN+="/sbin/ip link set can3 up type can bitrate 1000000", RUN+="/sbin/ip link set can3 txqueuelen 1000"
 
-SUBSYSTEM=="tty", ACTION=="add", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", KERNELS=="4-1", MODE="0666", SYMLINK+="ttyUSB0"
+SUBSYSTEM=="tty", ACTION=="add", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666", SYMLINK+="ttyUSB0"
 
