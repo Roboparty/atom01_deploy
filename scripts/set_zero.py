@@ -4,6 +4,22 @@ import sys
 import yaml
 import motors_py
 import time
+import termios
+import tty
+
+
+def read_key_nonblocking(timeout=0.05):
+    import select
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        if select.select([sys.stdin], [], [], timeout)[0]:
+            ch = sys.stdin.read(1)
+            return ch
+        return None
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 
 def load_config(config_path: str) -> dict:
@@ -53,12 +69,7 @@ def create_motors(config: dict) -> list:
     return motors
 
 
-def set_damping_mode(motor):
-    motor.set_motor_control_mode(motors_py.MotorControlMode.MIT)
-    motor.motor_mit_cmd(0.0, 0.0, 0.0, 2.0, 0.0)
-
-
-def calibrate_motor(motor_info: dict):
+def calibrate_motor(motor_info: dict) -> bool:
     motor = motor_info['motor']
     motor_id = motor_info['motor_id']
     interface = motor_info['interface']
@@ -71,24 +82,33 @@ def calibrate_motor(motor_info: dict):
     motor.init_motor()
     time.sleep(0.3)
     
-    print("设置纯阻尼控制模式 (MIT: 0, 0, 0, 2, 0)...")
-    set_damping_mode(motor)
+    print("设置纯阻尼控制模式...")
+    motor.set_motor_control_mode(motors_py.MotorControlMode.MIT)
     time.sleep(0.1)
     
     print("\n>>> 请手动将电机摆到零位 <<<")
     print("提示: 电机现在处于阻尼模式，可以自由转动")
+    print("操作: 按 [Enter] 确认标零 | 按 [空格] 跳过此电机")
     
+    zeroed = False
     try:
         while True:
-            motor.motor_mit_cmd(0.0, 0.0, 0.0, 2.0, 0.0)
+            motor.motor_mit_cmd(0.0, 0.0, 0.0, 1.0, 0.0)
             
             pos = motor.get_motor_pos()
-            print(f"\r当前位置: {pos:+.6f} rad | 按 Enter 确认并标零...", end='', flush=True)
+            err = motor.get_error_id()
+            print(f"\r当前位置: {pos:+.6f} rad | 错误码: {err} | [Enter]标零 / [空格]跳过", end='', flush=True)
             
-            import select
-            if select.select([sys.stdin], [], [], 0.05)[0]:
-                sys.stdin.readline()
+            key = read_key_nonblocking(0.05)
+            if key == '\r' or key == '\n':  # Enter
+                motor.set_motor_zero()
+                zeroed = True
                 break
+            elif key == ' ':  # Space
+                zeroed = False
+                break
+            elif key == '\x03':  # Ctrl+C
+                raise KeyboardInterrupt
             
             time.sleep(0.02)
     except KeyboardInterrupt:
@@ -96,12 +116,11 @@ def calibrate_motor(motor_info: dict):
         motor.deinit_motor()
         raise
     
-    motor.set_motor_zero()
-    print(f"\n\n电机 {motor_id} 已标零!")
-    
     print("失能电机...")
     motor.deinit_motor()
     time.sleep(0.2)
+    
+    return zeroed
 
 
 def main():
@@ -137,9 +156,16 @@ def main():
         return 1
     
     try:
+        zeroed_ids = []
+        skipped_ids = []
         for motor_info in motors:
-            calibrate_motor(motor_info)
-            print(f"电机 {motor_info['motor_id']} 标定完成!")
+            result = calibrate_motor(motor_info)
+            if result:
+                zeroed_ids.append(motor_info['motor_id'])
+                print(f"电机 {motor_info['motor_id']} 标定完成!")
+            else:
+                skipped_ids.append(motor_info['motor_id'])
+                print(f"电机 {motor_info['motor_id']} 已跳过")
     except KeyboardInterrupt:
         print("\n\n标定被用户中断")
         return 1
@@ -148,8 +174,12 @@ def main():
         return 1
     
     print("\n" + "="*60)
-    print("         所有电机标零完成!")
+    print("         标定流程完成!")
     print("="*60)
+    if zeroed_ids:
+        print(f"  已标零电机: {zeroed_ids}")
+    if skipped_ids:
+        print(f"  已跳过电机: {skipped_ids}")
     
     print("\n标定流程结束")
     return 0
