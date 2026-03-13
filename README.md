@@ -211,11 +211,12 @@ Once everything is ready, run the script to start the software:
 
 ### Gamepad Control
 
-- **A Button**: Initialize/Deinitialize motors
+- **A Button**: Initialize / Deinitialize motors
 - **X Button**: Reset motors
-- **B Button**: Start/Pause inference
+- **B Button**: Start / Pause inference
 - **Y Button**: Switch between Gamepad Control / cmd_vel Control
 - **LB Button**: Switch policy mode (available in beyondmimic / interrupt modes)
+- **RB Button**: Switch motion sequence (available in beyondmimic mode)
 
 ### Service Interface
 
