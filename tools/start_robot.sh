@@ -25,7 +25,7 @@ show_usage() {
     echo "用法: $0 [--robot ROBOT] [--policy POLICY]"
     echo "      $0 [ROBOT] [POLICY]"
     echo
-    echo "默认: robot=rpo, policy=default"
+    echo "默认: robot=rpo, policy=default；ROS 自动检测，仅支持 Humble、Jazzy"
     echo "示例: $0 --robot rpo --policy amp"
     echo "示例: $0 rpo beyondmimic"
 }
@@ -228,14 +228,8 @@ if [ ! -f "$FASTRTPS_DEFAULT_PROFILES_FILE" ]; then
     exit 1
 fi
 
-# 检查是否已source setup文件
-if [ -z "$AMENT_PREFIX_PATH" ]; then
-    print_info "未检测到ROS 2环境，正在执行source..."
-    source /opt/ros/humble/setup.bash || {
-        print_error "无法source /opt/ros/humble/setup.bash，请检查路径是否正确"
-        exit 1
-    }
-fi
+source tools/ros_environment.sh || exit 1
+setup_ros_environment || exit 1
 
 # 检查 colcon 和 ros2
 if ! command -v colcon &> /dev/null; then

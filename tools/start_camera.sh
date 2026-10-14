@@ -23,7 +23,7 @@ show_usage() {
     echo
     echo "分别在 realsense_session 和 camera_session 中启动 RealSense 与 depth_node。"
     echo
-    echo "默认: policy=parkour"
+    echo "默认: policy=parkour；ROS 自动检测，仅支持 Humble、Jazzy"
     echo "示例: $0"
     echo "示例: $0 --policy parkour"
 }
@@ -206,13 +206,8 @@ if [ ! -f "$FASTRTPS_DEFAULT_PROFILES_FILE" ]; then
     exit 1
 fi
 
-if [ -z "$AMENT_PREFIX_PATH" ]; then
-    print_info "未检测到 ROS 2 环境，正在执行 source..."
-    source /opt/ros/humble/setup.bash || {
-        print_error "无法 source /opt/ros/humble/setup.bash，请检查路径是否正确"
-        exit 1
-    }
-fi
+source tools/ros_environment.sh || exit 1
+setup_ros_environment || exit 1
 
 if ! command -v colcon &>/dev/null; then
     print_error "colcon 未安装，请安装 ROS 2 开发工具"
