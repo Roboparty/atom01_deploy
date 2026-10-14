@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import argparse
 import sys
 import yaml
 import motors_py
@@ -31,10 +32,14 @@ def load_config(config_path: str) -> dict:
 def create_motors(config: dict) -> list:
     motors = []
     motor_ids = config['motor_id']
-    motor_interface_type = config['motor_interface_type']
+    motor_interface_types = config['motor_interface_type']
     motor_interfaces = config['motor_interface']
+    if isinstance(motor_interface_types, str):
+        motor_interface_types = [motor_interface_types] * len(motor_interfaces)
     motor_num = config['motor_num']
     motor_type = config['motor_type']
+    if isinstance(motor_type, str):
+        motor_type = [motor_type] * len(motor_interfaces)
     motor_models = config['motor_model']
     master_id_offset = config['master_id_offset']
     motor_zero_offsets = config['motor_zero_offset']
@@ -42,6 +47,7 @@ def create_motors(config: dict) -> list:
     motor_idx = 0
     for interface_idx, num in enumerate(motor_num):
         interface = motor_interfaces[interface_idx]
+        interface_type = motor_interface_types[interface_idx]
         for _ in range(num):
             if motor_idx >= len(motor_ids):
                 break
@@ -51,18 +57,21 @@ def create_motors(config: dict) -> list:
             
             motor = motors_py.MotorDriver.create_motor(
                 motor_id=motor_id,
-                interface_type=motor_interface_type,
+                interface_type=interface_type,
                 interface=interface,
-                motor_type=motor_type,
+                motor_type=motor_type[interface_idx],
                 motor_model=motor_model,
                 master_id_offset=master_id_offset,
                 motor_zero_offset=motor_zero_offset,
             )
+            use_batch_mit = (interface_type == "canfd" and motor_type[interface_idx] in ("EVO", "RP"))
             motors.append({
                 'motor': motor,
                 'motor_id': motor_id,
                 'interface': interface,
-                'index': motor_idx
+                'interface_type': interface_type,
+                'index': motor_idx,
+                'use_batch_mit': use_batch_mit,
             })
             motor_idx += 1
     
@@ -73,7 +82,7 @@ def calibrate_motor(motor_info: dict) -> bool:
     motor = motor_info['motor']
     motor_id = motor_info['motor_id']
     interface = motor_info['interface']
-    
+    use_batch_mit = motor_info.get('use_batch_mit', False)
     print(f"\n{'='*50}")
     print(f"正在标定电机 ID: {motor_id} (接口: {interface})")
     print(f"{'='*50}")
@@ -89,11 +98,21 @@ def calibrate_motor(motor_info: dict) -> bool:
     print("\n>>> 请手动将电机摆到零位 <<<")
     print("提示: 电机现在处于阻尼模式，可以自由转动")
     print("操作: 按 [Enter] 确认标零 | 按 [空格] 跳过此电机")
-    
+
+    if use_batch_mit:
+        p_arr = [0.0] * 8
+        v_arr = [0.0] * 8
+        kp_arr = [0.0] * 8
+        kd_arr = [2.0] * 8
+        t_arr = [0.0] * 8
+
     zeroed = False
     try:
         while True:
-            motor.motor_mit_cmd(0.0, 0.0, 0.0, 1.0, 0.0)
+            if use_batch_mit:
+                motor.motors_mit_cmd(p_arr, v_arr, kp_arr, kd_arr, t_arr)
+            else:
+                motor.motor_mit_cmd(0.0, 0.0, 0.0, 2.0, 0.0)
             
             pos = motor.get_motor_pos()
             err = motor.get_error_id()
@@ -125,7 +144,9 @@ def calibrate_motor(motor_info: dict) -> bool:
 
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(script_dir, 'config', 'set_zero.yaml')
+    parser = argparse.ArgumentParser(description='Motor zero calibration')
+    parser.add_argument('--config', default=os.path.join(script_dir, 'config', 'set_zero_rpo.yaml'))
+    config_path = parser.parse_args().config
     
     print("="*60)
     print("           电机零点标定工具")
@@ -181,7 +202,7 @@ def main():
     if skipped_ids:
         print(f"  已跳过电机: {skipped_ids}")
     
-    print("\n标定流程结束")
+    print("\n标定流程结束，请将已标零电机重新上下电后再使用新的零点")
     return 0
 
 
