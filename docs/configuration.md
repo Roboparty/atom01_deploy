@@ -77,7 +77,7 @@ See the [DM driver](../src/motors/src/drivers/dm/dm_motor_driver.hpp) and [LRO d
 
 | Parameter | Type / length | Meaning |
 | --- | --- | --- |
-| `robot.type` | String | Closed-chain mechanism type: `rpo` or `rp1.3`. `rp1_24dof` uses `rp1.3`; the robot directory is selected by the `--robot` startup argument |
+| `robot.type` | String | Closed-chain mechanism type: `rpo` or `rp1`. `rp1_24dof` uses `rp1`; the robot directory is selected by the `--robot` startup argument |
 | `robot.kp` | Number array, `N` | Default MIT stiffness gains in motor order |
 | `robot.kd` | Number array, `N` | Default MIT damping gains in motor order |
 | `robot.motor_sign` | Integer array, `N` | Motor directions, normally `1` / `-1`, in motor order; applied to position, velocity, and effort conversions |
