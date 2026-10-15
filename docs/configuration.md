@@ -263,7 +263,7 @@ Update `depth_topic` when changing the namespace or camera name. `start_camera.s
 
 The zeroing script supports string broadcasting; the corresponding `robot.yaml` fields use arrays. Each configuration must follow its own format. The script assigns `0` to motor entries missing from model/offset arrays; configurations should explicitly provide complete model and offset values.
 
-Without `--config`, the script uses RPO configuration. RP1 must select `scripts/config/set_zero_rp1.yaml`, currently for 24 motors only. A 28-motor RP1 needs a separate matching configuration. The script writes individual motor hardware zeros. Runtime `motor_zero_offset`, `motor_sign`, and joint mappings remain configured in their respective YAML files.
+Without `--config`, the script uses RPO configuration. For RP1, select `scripts/config/set_zero_rp1_24dof.yaml` for 24 motors or `scripts/config/set_zero_rp1.yaml` for 28 motors. The script writes individual motor hardware zeros. Runtime `motor_zero_offset`, `motor_sign`, and joint mappings remain configured in their respective YAML files.
 
 The RPO runtime and zeroing configurations currently use waist software offsets of `2.093` and `0.0`, respectively. These values serve runtime coordinate conversion and the calibration process, respectively, and must be determined according to their physical reference poses. See [RPO Software Startup](rpo_deploy.md#start-software) for the waist calibration method and offset choice.
 

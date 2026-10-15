@@ -263,7 +263,7 @@ filtered_target[j] = act_alpha * target[j] + (1 - act_alpha) * previous_target[j
 
 标零脚本支持字符串广播；`robot.yaml` 的对应字段采用数组结构，两类配置应按各自格式维护。标零脚本将型号/零偏数组中缺失的电机项赋值为 `0`，配置时应显式提供完整的型号和零偏参数。
 
-省略 `--config` 时默认读取 RPO 配置。RP1 必须指定 `scripts/config/set_zero_rp1.yaml`，当前该文件只对应 24 电机配置；28 电机 RP1 需要另备匹配的标零配置。脚本逐项写入电机硬件零点，运行配置中的 `motor_zero_offset`、`motor_sign` 及关节映射保持原值。
+省略 `--config` 时默认读取 RPO 配置。24 电机 RP1 指定 `scripts/config/set_zero_rp1_24dof.yaml`，28 电机 RP1 指定 `scripts/config/set_zero_rp1.yaml`。脚本逐项写入电机硬件零点，运行配置中的 `motor_zero_offset`、`motor_sign` 及关节映射保持原值。
 
 RPO 的运行配置与标零配置中的腰部软件偏移目前分别为 `2.093` 和 `0.0`，两项分别用于运行坐标转换和标零过程，应依据对应物理基准分别确定。腰部标零方法及偏移选择见 [RPO 启动说明](rpo_deploy_CN.md#启动软件)。
 
