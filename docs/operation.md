@@ -47,6 +47,17 @@ Use a single ROS distribution per terminal and workspace. When changing distribu
 
 The startup command is `bash tools/start_robot.sh --robot ROBOT --policy POLICY`. Defaults are `rpo` / `default`; see the robot guides for specific commands.
 
+RP1 `default` uses the trained Flat policy (3 history frames, 50 Hz). `beyondmimic` starts with the same Flat policy; press LB to switch between walking and waving. The waving policy uses one frame and holds the final reference pose:
+
+```bash
+bash tools/start_robot.sh rp1_24dof default
+bash tools/start_robot.sh rp1_24dof beyondmimic
+bash tools/start_robot.sh rp1_24dof amp
+bash tools/start_robot.sh rp1_24dof interrupt
+```
+
+`amp` uses the RP1 AMP policy with three history frames and the training velocity bounds. `interrupt` uses the RP1 Interrupt policy with the same three-frame history plus the interrupt-mode flag; the existing RP1 arm-interrupt control path is used when interrupt mode is enabled.
+
 Startup creates the `inference_session` and `joy_session` screen sessions. Inspect their output:
 
 ```bash

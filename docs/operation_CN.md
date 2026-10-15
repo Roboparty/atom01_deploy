@@ -47,6 +47,17 @@ source install/setup.bash
 
 启动命令为 `bash tools/start_robot.sh --robot ROBOT --policy POLICY`。省略参数时使用 `rpo` / `default`；具体命令见对应机器人文档。
 
+RP1 的 `default` 使用已训练的 Flat 策略（3 帧历史，50 Hz）。`beyondmimic` 启动时使用同一 Flat 策略，按 LB 在行走和挥手之间切换。挥手策略使用 1 帧观测，动作结束后保持末帧：
+
+```bash
+bash tools/start_robot.sh rp1_24dof default
+bash tools/start_robot.sh rp1_24dof beyondmimic
+bash tools/start_robot.sh rp1_24dof amp
+bash tools/start_robot.sh rp1_24dof interrupt
+```
+
+`amp` 使用 RP1 AMP 策略，保留 3 帧历史和训练时的速度指令范围。`interrupt` 使用 RP1 Interrupt 策略，同样保留 3 帧历史，并额外输入干扰模式标志；按 LB 进入或退出干扰模式后，部署节点沿用现有 RP1 手臂干扰控制接口。
+
 启动后创建 `inference_session` 和 `joy_session` 两个 screen 会话。查看输出：
 
 ```bash
