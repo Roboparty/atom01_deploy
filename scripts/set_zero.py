@@ -87,27 +87,27 @@ def calibrate_motor(motor_info: dict) -> bool:
     print(f"正在标定电机 ID: {motor_id} (接口: {interface})")
     print(f"{'='*50}")
     
-    print("使能电机...")
-    motor.init_motor()
-    time.sleep(0.3)
-    
-    print("设置纯阻尼控制模式...")
-    motor.set_motor_control_mode(motors_py.MotorControlMode.MIT)
-    time.sleep(0.1)
-    
-    print("\n>>> 请手动将电机摆到零位 <<<")
-    print("提示: 电机现在处于阻尼模式，可以自由转动")
-    print("操作: 按 [Enter] 确认标零 | 按 [空格] 跳过此电机")
-
-    if use_batch_mit:
-        p_arr = [0.0] * 8
-        v_arr = [0.0] * 8
-        kp_arr = [0.0] * 8
-        kd_arr = [2.0] * 8
-        t_arr = [0.0] * 8
-
     zeroed = False
     try:
+        print("使能电机...")
+        motor.init_motor()
+        time.sleep(0.3)
+
+        print("设置纯阻尼控制模式...")
+        motor.set_motor_control_mode(motors_py.MotorControlMode.MIT)
+        time.sleep(0.1)
+
+        print("\n>>> 请手动将电机摆到零位 <<<")
+        print("提示: 电机现在处于阻尼模式，可以自由转动")
+        print("操作: 按 [Enter] 确认标零 | 按 [空格] 跳过此电机")
+
+        if use_batch_mit:
+            p_arr = [0.0] * 8
+            v_arr = [0.0] * 8
+            kp_arr = [0.0] * 8
+            kd_arr = [2.0] * 8
+            t_arr = [0.0] * 8
+
         while True:
             if use_batch_mit:
                 motor.motors_mit_cmd(p_arr, v_arr, kp_arr, kd_arr, t_arr)
@@ -132,11 +132,11 @@ def calibrate_motor(motor_info: dict) -> bool:
             time.sleep(0.02)
     except KeyboardInterrupt:
         print("\n\n用户中断标定")
-        motor.deinit_motor()
         raise
+    finally:
+        motor.deinit_motor()
     
-    print("失能电机...")
-    motor.deinit_motor()
+    print("电机已失能")
     time.sleep(0.2)
     
     return zeroed
