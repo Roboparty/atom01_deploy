@@ -100,7 +100,8 @@ start_component() {
 
     print_info "启动 $session_name ..."
     # 在screen会话中启动ROS命令，并确保传递DDS配置环境变量
-    screen -dmS $session_name bash -c "source install/setup.bash; export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE='$FASTRTPS_DEFAULT_PROFILES_FILE'; $launch_cmd; exec bash"
+    # Pass the workspace path as data so apostrophes do not break bash -c quoting.
+    screen -dmS "$session_name" bash -c "source install/setup.bash; export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE=\"\$1\"; $launch_cmd; exec bash" bash "$FASTRTPS_DEFAULT_PROFILES_FILE"
     sleep $sleep_time
 
     if ! ros2 node list | grep -q "$node_name"; then

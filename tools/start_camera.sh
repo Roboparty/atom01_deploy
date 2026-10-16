@@ -260,7 +260,8 @@ cleanup_camera_sessions
 
 print_info "启动 realsense_session（RealSense）..."
 print_info "RealSense 配置文件: $REALSENSE_CONFIG"
-screen -dmS realsense_session bash -c "source install/setup.bash; export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE='$FASTRTPS_DEFAULT_PROFILES_FILE'; ros2 launch realsense2_camera rs_launch.py config_file:='$REALSENSE_CONFIG'; exec bash"
+# Pass the workspace path as data so apostrophes do not break bash -c quoting.
+screen -dmS realsense_session bash -c "source install/setup.bash; export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE=\"\$1\"; ros2 launch realsense2_camera rs_launch.py config_file:='$REALSENSE_CONFIG'; exec bash" bash "$FASTRTPS_DEFAULT_PROFILES_FILE"
 
 if ! verify_realsense_startup "$DEPTH_TOPIC"; then
     cleanup_camera_sessions
@@ -268,7 +269,7 @@ if ! verify_realsense_startup "$DEPTH_TOPIC"; then
 fi
 
 print_info "启动 camera_session（depth_node）..."
-screen -dmS camera_session bash -c "source install/setup.bash; export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE='$FASTRTPS_DEFAULT_PROFILES_FILE'; ros2 launch camera depth.launch.py policy:='$POLICY' start_camera:=false; exec bash"
+screen -dmS camera_session bash -c "source install/setup.bash; export RMW_IMPLEMENTATION='$RMW_IMPLEMENTATION'; export RMW_FASTRTPS_USE_QOS_FROM_XML='$RMW_FASTRTPS_USE_QOS_FROM_XML'; export FASTRTPS_DEFAULT_PROFILES_FILE=\"\$1\"; ros2 launch camera depth.launch.py policy:='$POLICY' start_camera:=false; exec bash" bash "$FASTRTPS_DEFAULT_PROFILES_FILE"
 
 if ! verify_depth_startup "$DEPTH_OBS_TOPIC"; then
     cleanup_camera_sessions
